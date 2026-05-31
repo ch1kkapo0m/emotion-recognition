@@ -32,13 +32,11 @@ while True:
         emotion = EMOTIONS[emotion_idx]
         confidence = predictions[0][emotion_idx] * 100
 
-        # малюємо рамку і підпис
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         label = f"{emotion} {confidence:.1f}%"
         cv2.putText(frame, label, (x, y-10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-        # показуємо всі емоції збоку
         for i, (em, prob) in enumerate(zip(EMOTIONS, predictions[0])):
             bar_w = int(prob * 150)
             cv2.rectangle(frame, (10, 10 + i*25),

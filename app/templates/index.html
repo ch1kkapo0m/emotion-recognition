@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1>Emotion Recognition</h1>
+        <span>Система розпізнавання емоцій · CNN · FER2013</span>
+    </div>
+    <div class="badge">accuracy 64%</div>
+</header>
+
+<div class="tabs-wrap">
+    <button class="tab active" data-tab="upload">📁 Завантаження</button>
+    <button class="tab" data-tab="camera">🎥 Камера</button>
+</div>
+
+<!-- ТАБ 1: Завантаження -->
+<div class="tab-content active" id="tab-upload">
+    <div class="container">
+
+        <!-- Під-таби -->
+        <div class="subtabs-wrap">
+            <button class="subtab active" data-subtab="photo">🖼️ Фото</button>
+            <button class="subtab" data-subtab="video">🎬 Відео</button>
+        </div>
+
+        <!-- ФОТО -->
+        <div class="subtab-content active" id="subtab-photo">
+            <div class="grid">
+                <div class="card">
+                    <h2>Завантажити фото</h2>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" accept="image/*">
+                        <div class="upload-icon">🖼️</div>
+                        <p><strong>Клікни або перетягни</strong> фото сюди</p>
+                        <p class="hint">JPG, PNG, WEBP · до 10MB</p>
+                    </div>
+                    <div class="preview-wrap" id="previewWrap">
+                        <img id="previewImg" alt="preview">
+                        <div class="preview-placeholder" id="previewPlaceholder">
+                            <div class="ph-icon">📷</div>
+                            Попередній перегляд
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="analyzeBtn" disabled>
+                        Аналізувати емоції
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2>Результат</h2>
+                    <div class="empty-state" id="emptyState">
+                        <div class="ph-icon">🧠</div>
+                        <p>Завантажте фото щоб побачити результат</p>
+                    </div>
+                    <div class="loader" id="loader">
+                        <div class="spinner"></div>
+                        <p>Аналізуємо...</p>
+                    </div>
+                    <div class="error-msg" id="errorMsg"></div>
+                    <div id="resultsWrap" style="display:none">
+                        <div class="face-tabs" id="faceTabs"></div>
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- ВІДЕО -->
+<div class="subtab-content" id="subtab-video">
+    <div class="video-page">
+
+        <!-- Ліва: відео + timeline + знімки -->
+        <div class="video-left">
+            <div class="card">
+                <h2>Відео файл</h2>
+                <div class="upload-zone" id="videoUploadZone">
+                    <input type="file" id="videoInput" accept="video/*">
+                    <div class="upload-icon">🎬</div>
+                    <p><strong>Клікни або перетягни</strong> відео сюди</p>
+                    <p class="hint">MP4, AVI, MOV · до 200MB</p>
+                </div>
+
+                <div id="videoPlayerWrap" style="display:none; margin-top:16px;">
+                    <video id="videoPlayer" controls
+                           style="width:100%; border-radius:12px; background:#000; max-height:420px;">
+                    </video>
+                </div>
+
+                <div class="video-controls" id="videoControls" style="display:none">
+                    <button class="btn btn-primary" id="analyzeVideoBtn">▶ Почати аналіз</button>
+                    <button class="btn btn-stop" id="stopVideoBtn" style="display:none">■ Зупинити</button>
+                </div>
+
+                <div class="progress-wrap" id="progressWrap" style="display:none">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progressTime">0:00 / 0:00</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TIMELINE прямо під відео -->
+            <div class="card" style="margin-top:16px;">
+                <h2>Timeline емоцій</h2>
+                <div class="timeline-wrap" id="timelineWrap">
+                    <div class="timeline-track" id="timelineTrack"></div>
+                    <div class="timeline-cursor" id="timelineCursor"></div>
+                    <div class="timeline-labels" id="timelineLabels"></div>
+                </div>
+                <div class="timeline-legend">
+                    <div class="tl-legend-item" style="--c:#DC2626">angry</div>
+                    <div class="tl-legend-item" style="--c:#16A34A">disgust</div>
+                    <div class="tl-legend-item" style="--c:#9333EA">fear</div>
+                    <div class="tl-legend-item" style="--c:#CA8A04">happy</div>
+                    <div class="tl-legend-item" style="--c:#6B7280">neutral</div>
+                    <div class="tl-legend-item" style="--c:#2563EB">sad</div>
+                    <div class="tl-legend-item" style="--c:#0891B2">surprise</div>
+                </div>
+            </div>
+
+            <!-- ЗНІМКИ під timeline -->
+            <div class="card" style="margin-top:16px;">
+                <h2>Ключові моменти <span id="snapshotCount" style="color:#6b6b80; font-weight:400; font-size:12px;"></span></h2>
+                <div class="snapshots-grid" id="snapshotsGrid">
+                    <div class="snapshots-empty">Знімки з'являться коли емоція різко зміниться</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Права: тільки статистика -->
+        <div class="video-right">
+            <div class="card" style="text-align:center">
+                <h2>Поточна емоція</h2>
+                <div class="emotion-emoji-big" id="videoEmoji">🎬</div>
+                <div class="emotion-name" id="videoEmotionName"
+                     style="font-size:28px; font-weight:700; margin:8px 0;">—</div>
+                <div class="emotion-conf" id="videoConf"
+                     style="color:#6b6b80; font-size:13px;">Завантажте відео</div>
+            </div>
+
+            <div class="card">
+                <h2>Ймовірності</h2>
+                <div class="live-bars" id="videoBars">
+                    <div class="bar-row"><span class="bar-label">angry</span><div class="bar-track"><div class="bar-fill" id="vbar-angry" style="width:0%;background:#DC2626"></div></div><span class="bar-pct" id="vpct-angry">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">disgust</span><div class="bar-track"><div class="bar-fill" id="vbar-disgust" style="width:0%;background:#16A34A"></div></div><span class="bar-pct" id="vpct-disgust">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">fear</span><div class="bar-track"><div class="bar-fill" id="vbar-fear" style="width:0%;background:#9333EA"></div></div><span class="bar-pct" id="vpct-fear">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">happy</span><div class="bar-track"><div class="bar-fill" id="vbar-happy" style="width:0%;background:#CA8A04"></div></div><span class="bar-pct" id="vpct-happy">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">neutral</span><div class="bar-track"><div class="bar-fill" id="vbar-neutral" style="width:0%;background:#6B7280"></div></div><span class="bar-pct" id="vpct-neutral">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">sad</span><div class="bar-track"><div class="bar-fill" id="vbar-sad" style="width:0%;background:#2563EB"></div></div><span class="bar-pct" id="vpct-sad">0%</span></div>
+                    <div class="bar-row"><span class="bar-label">surprise</span><div class="bar-track"><div class="bar-fill" id="vbar-surprise" style="width:0%;background:#0891B2"></div></div><span class="bar-pct" id="vpct-surprise">0%</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Статистика</h2>
+                <div class="session-stats">
+                    <div class="stat-row">Домінуюча: <span id="vstatDominant">—</span></div>
+                    <div class="stat-row">Кадрів: <span id="vstatFrames">0</span></div>
+                    <div class="stat-row">Облич: <span id="vstatFaces">0</span></div>
+                </div>
+                <div style="margin-top:16px;" id="emotionSummary"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ТАБ 2: Камера -->
+<div class="tab-content" id="tab-camera">
+    <div class="camera-page">
+        <div class="camera-main">
+            <div class="camera-feed-wrap" id="cameraFeedWrap">
+                <img id="cameraFeed" src="" alt="camera">
+                <div class="cam-placeholder" id="camPlaceholder">
+                    <div style="font-size:64px">📹</div>
+                    <p>Натисни кнопку щоб увімкнути камеру</p>
+                </div>
+                <div class="cam-controls">
+                    <button class="btn-cam start" id="startCamBtn">▶ Увімкнути</button>
+                    <button class="btn-cam stop" id="stopCamBtn" style="display:none">■ Зупинити</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="camera-sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-title">Поточна емоція</div>
+                <div class="current-emotion">
+                    <div class="emotion-emoji-big" id="emotionEmoji">😐</div>
+                    <div class="emotion-name" id="emotionName">—</div>
+                    <div class="emotion-conf" id="emotionConf">Запустіть камеру</div>
+                </div>
+            </div>
+            <div class="sidebar-card">
+                <div class="sidebar-title">Ймовірності</div>
+                <div class="live-bars" id="liveBars">
+                    <div class="bar-row"><span class="bar-label">angry</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#DC2626"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">disgust</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#16A34A"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">fear</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#9333EA"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">happy</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#CA8A04"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">neutral</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#6B7280"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">sad</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#2563EB"></div></div><span class="bar-pct">14%</span></div>
+                    <div class="bar-row"><span class="bar-label">surprise</span><div class="bar-track"><div class="bar-fill" style="width:14%;background:#0891B2"></div></div><span class="bar-pct">14%</span></div>
+                </div>
+            </div>
+            <div class="sidebar-card">
+                <div class="sidebar-title">Статистика сесії</div>
+                <div class="session-stats">
+                    <div class="stat-row">Домінуюча: <span id="statDominant">—</span></div>
+                    <div class="stat-row">Кадрів: <span id="statFrames">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

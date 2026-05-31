@@ -18,7 +18,6 @@ TRAIN_DIR = 'data/train/train'
 TEST_DIR = 'data/train/test'
 EMOTIONS = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
 
-# логування
 os.makedirs('logs', exist_ok=True)
 os.makedirs('models', exist_ok=True)
 log_filename = f"logs/mobilenet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -45,7 +44,6 @@ log.info(f"EPOCHS_PHASE2: {EPOCHS_PHASE2}")
 log.info(f"NUM_CLASSES: {NUM_CLASSES}")
 log.info(f"EMOTIONS: {EMOTIONS}")
 
-# генератори
 log.info("-" * 55)
 log.info("Ініціалізація генераторів даних...")
 
