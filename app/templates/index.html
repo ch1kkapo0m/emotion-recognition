@@ -173,9 +173,41 @@
             </div>
         </div>
     </div>
+        </div>
+    </div> 
 </div>
 <!-- ТАБ 2: Камера -->
 <div class="tab-content" id="tab-camera">
+    <div style="
+    background:#18181f;
+    border-bottom:1px solid #2a2a35;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+    ">
+    <img src="/qr" style="
+        width:80px; height:80px;
+        border-radius:10px;
+        background:#fff;
+        padding:4px;
+        flex-shrink:0;
+    ">
+    <div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:4px;">
+            📱 Відкрити на телефоні
+        </div>
+        <div id="qrUrlText" style="
+            font-size:12px;
+            color:#6b6b80;
+            word-break:break-all;
+            margin-bottom:8px;
+        "></div>
+        <div style="font-size:11px; color:#f59e0b;">
+            ⚠️ Телефон має бути в тій самій Wi-Fi мережі
+        </div>
+    </div>
+    </div>
     <div class="camera-page">
         <div class="camera-main">
             <div class="camera-feed-wrap" id="cameraFeedWrap">
@@ -224,5 +256,10 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+fetch('/qr_url').then(r=>r.json()).then(d=>{
+    document.querySelectorAll('#qrUrlText').forEach(el => el.textContent = d.url.replace('http://','https://'));
+});
+</script>
 </body>
 </html>

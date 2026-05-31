@@ -178,17 +178,16 @@ def mobile():
 
 @app.route('/qr')
 def qr_code():
-    url = f'http://{LOCAL_IP}:{PORT}/mobile'
+    url = f'https://{LOCAL_IP}:{PORT}/mobile'
     img = qrcode.make(url)
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     buf.seek(0)
     return Response(buf.getvalue(), mimetype='image/png')
 
-
 @app.route('/qr_url')
 def qr_url():
-    return jsonify({'url': f'http://{LOCAL_IP}:{PORT}/mobile'})
+    return jsonify({'url': f'https://{LOCAL_IP}:{PORT}/mobile'})
 
 
 @app.route('/predict', methods=['POST'])

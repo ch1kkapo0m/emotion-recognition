@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Emotion · Mobile</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f0f13;
+            color: #e2e2e8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 16px 20px 12px;
+            text-align: center;
+            background: #18181f;
+            border-bottom: 1px solid #2a2a35;
+        }
+        header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        header span { font-size: 11px; color: #6b6b80; }
+
+        /* ── камера ── */
+        .cam-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            background: #000;
+        }
+        #video {
+            width: 100%;
+            display: block;
+            transform: scaleX(-1); /* дзеркало для фронталки */
+        }
+        #overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            transform: scaleX(-1);
+        }
+
+        /* ── статус ── */
+        .status-bar {
+            width: 100%;
+            max-width: 480px;
+            padding: 10px 16px;
+            background: #18181f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #2a2a35;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #444;
+            transition: background 0.3s;
+        }
+        .dot.active { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .status-text { font-size: 13px; color: #9090a0; }
+
+        /* ── поточна емоція ── */
+        .emotion-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px 16px 16px;
+            text-align: center;
+            background: #18181f;
+            border-bottom: 1px solid #2a2a35;
+        }
+        .emotion-emoji { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+        .emotion-name {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            transition: color 0.3s;
+        }
+        .emotion-conf { font-size: 13px; color: #6b6b80; }
+
+        /* ── бари ── */
+        .bars-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            background: #18181f;
+            border-bottom: 1px solid #2a2a35;
+        }
+        .bars-title { font-size: 12px; color: #6b6b80; text-transform: uppercase;
+                      letter-spacing: 1px; margin-bottom: 12px; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .bar-label { font-size: 12px; color: #9090a0; width: 52px; }
+        .bar-track {
+            flex: 1;
+            height: 8px;
+            background: #2a2a35;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .bar-pct { font-size: 11px; color: #6b6b80; width: 36px; text-align: right; }
+
+        /* ── кнопка ── */
+        .btn-wrap {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+        }
+        .btn-start, .btn-stop {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-start { background: #6366f1; color: #fff; }
+        .btn-stop  { background: #dc2626; color: #fff; display: none; }
+        .btn-start:active, .btn-stop:active { opacity: 0.8; }
+
+        /* ── no-face ── */
+        #noFace {
+            display: none;
+            font-size: 12px;
+            color: #f59e0b;
+            text-align: center;
+            padding: 6px 0 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Emotion Recognition</h1>
+    <span>Мобільна камера · CNN · FER2013</span>
+</header>
+
+<div class="cam-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+</div>
+
+<div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span class="status-text" id="statusText">Натисни кнопку щоб почати</span>
+</div>
+
+<div class="emotion-card">
+    <div class="emotion-emoji" id="emoji">😐</div>
+    <div class="emotion-name" id="emotionName">—</div>
+    <div class="emotion-conf" id="emotionConf">Запусти камеру</div>
+    <div id="noFace">⚠️ Обличчя не знайдено</div>
+</div>
+
+<div class="bars-card">
+    <div class="bars-title">Ймовірності</div>
+    <div class="bar-row"><span class="bar-label">angry</span><div class="bar-track"><div class="bar-fill" id="b-angry" style="background:#DC2626"></div></div><span class="bar-pct" id="p-angry">0%</span></div>
+    <div class="bar-row"><span class="bar-label">disgust</span><div class="bar-track"><div class="bar-fill" id="b-disgust" style="background:#16A34A"></div></div><span class="bar-pct" id="p-disgust">0%</span></div>
+    <div class="bar-row"><span class="bar-label">fear</span><div class="bar-track"><div class="bar-fill" id="b-fear" style="background:#9333EA"></div></div><span class="bar-pct" id="p-fear">0%</span></div>
+    <div class="bar-row"><span class="bar-label">happy</span><div class="bar-track"><div class="bar-fill" id="b-happy" style="background:#CA8A04"></div></div><span class="bar-pct" id="p-happy">0%</span></div>
+    <div class="bar-row"><span class="bar-label">neutral</span><div class="bar-track"><div class="bar-fill" id="b-neutral" style="background:#6B7280"></div></div><span class="bar-pct" id="p-neutral">0%</span></div>
+    <div class="bar-row"><span class="bar-label">sad</span><div class="bar-track"><div class="bar-fill" id="b-sad" style="background:#2563EB"></div></div><span class="bar-pct" id="p-sad">0%</span></div>
+    <div class="bar-row"><span class="bar-label">surprise</span><div class="bar-track"><div class="bar-fill" id="b-surprise" style="background:#0891B2"></div></div><span class="bar-pct" id="p-surprise">0%</span></div>
+</div>
+
+<div class="btn-wrap">
+    <button class="btn-start" id="btnStart">▶ Увімкнути камеру</button>
+    <button class="btn-stop"  id="btnStop">■ Зупинити</button>
+</div>
+
+<script>
+const EMOTIONS = ['angry','disgust','fear','happy','neutral','sad','surprise'];
+const EMOJI_MAP = {
+    angry:'😠', disgust:'🤢', fear:'😨',
+    happy:'😊', neutral:'😐', sad:'😢', surprise:'😲'
+};
+
+const video    = document.getElementById('video');
+const overlay  = document.getElementById('overlay');
+const ctx      = overlay.getContext('2d');
+const dot      = document.getElementById('dot');
+const statusTx = document.getElementById('statusText');
+const emojiEl  = document.getElementById('emoji');
+const nameEl   = document.getElementById('emotionName');
+const confEl   = document.getElementById('emotionConf');
+const noFace   = document.getElementById('noFace');
+const btnStart = document.getElementById('btnStart');
+const btnStop  = document.getElementById('btnStop');
+
+let running = false;
+let animId  = null;
+const canvas = document.createElement('canvas');
+const cctx   = canvas.getContext('2d');
+
+btnStart.addEventListener('click', async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+
+        running = true;
+        btnStart.style.display = 'none';
+        btnStop.style.display  = 'block';
+        dot.classList.add('active');
+        statusTx.textContent = 'Аналізується...';
+
+        loop();
+    } catch(e) {
+        statusTx.textContent = 'Помилка доступу до камери: ' + e.message;
+    }
+});
+
+btnStop.addEventListener('click', () => {
+    running = false;
+    cancelAnimationFrame(animId);
+    video.srcObject?.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+    btnStart.style.display = 'block';
+    btnStop.style.display  = 'none';
+    dot.classList.remove('active');
+    statusTx.textContent = 'Зупинено';
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+});
+
+let lastSent = 0;
+const INTERVAL = 400; // мс між запитами
+
+async function loop() {
+    if (!running) return;
+
+    const now = Date.now();
+    if (now - lastSent >= INTERVAL && video.readyState === 4) {
+        lastSent = now;
+
+        // знімаємо кадр
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        cctx.drawImage(video, 0, 0);
+        const frameData = canvas.toDataURL('image/jpeg', 0.7);
+
+        // синхронізуємо overlay
+        overlay.width  = video.offsetWidth;
+        overlay.height = video.offsetHeight;
+
+        try {
+            const res = await fetch('/analyze_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ frame: frameData })
+            });
+            const data = await res.json();
+
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            if (!data.emotion) {
+                noFace.style.display = 'block';
+            } else {
+                noFace.style.display = 'none';
+
+                // оновлюємо UI
+                emojiEl.textContent = EMOJI_MAP[data.emotion] || '😐';
+                nameEl.textContent  = data.emotion;
+                nameEl.style.color  = data.color;
+                confEl.textContent  = `Впевненість: ${data.confidence.toFixed(1)}%`;
+
+                EMOTIONS.forEach(em => {
+                    const pct = data.all_probs[em] || 0;
+                    document.getElementById('b-' + em).style.width = pct + '%';
+                    document.getElementById('p-' + em).textContent = pct.toFixed(1) + '%';
+                });
+            }
+        } catch(e) {}
+    }
+
+    animId = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
